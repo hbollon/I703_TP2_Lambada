@@ -1,0 +1,94 @@
+/* package et imports */
+package fr.usmb.m1isc.compilation.tp;
+import java_cup.runtime.Symbol;
+import java.util.HashMap;
+
+/* inclusion du code */
+
+action code {: 
+    // pour utilisation dans les actions (classe action)
+	// HashMap pour la gestion des variables
+	private HashMap<String,Integer> vars = new HashMap<>();
+	// gestion des erreurs d'evaluation
+	private boolean erreur = false;
+:};
+
+ 
+parser code {:
+    // pour le parser (redefinition de la methode reportant les erreurs d'analyse)
+  public void report_error(String message, Object info) {
+ 	String m = "";
+ 	if (info instanceof java_cup.runtime.Symbol) {
+ 	    Symbol s = ((Symbol) info); 	
+ 		if (s != null && s.left >= 0 ) {
+ 			/* Ajoute le numero de ligne  et de colonne*/
+ 			m =  "Ligne " + (s.left+1) + ", Colonne " + (s.right+1) + " : ";
+ 			}
+ 		}
+ 	m = m + message;
+    System.err.println(m);
+    }
+:};
+
+ init with {:
+    //	initialisation du parser
+:};
+
+/* symboles terminaux */
+terminal PLUS, MOINS, MOINS_UNAIRE, MUL, DIV, MOD, NOT, OR, AND, PAR_G, PAR_D, SEMI, POINT, LET, INPUT, OUTPUT, IF, THEN, ELSE, WHILE, DO, EGAL, GT, GTE, NIL, ERROR; 
+terminal Integer ENTIER;
+terminal String IDENT;
+/* non terminaux */
+non terminal program, sequence, expression, expr;
+
+precedence nonassoc OUTPUT;
+precedence right OR;
+precedence right AND;
+precedence right NOT;
+precedence nonassoc EGAL;
+precedence nonassoc GT, GTE;
+precedence left PLUS, MOINS;
+precedence left MUL, DIV, MOD;
+precedence left MOINS_UNAIRE;
+
+/* grammaire */
+// un pg est une sequence d'insctions terminee par point
+program ::= 
+	sequence:s POINT  
+	;
+
+// une sequence est une suite d'instructions separes par des point virgules	
+sequence ::= expression:e1 SEMI sequence:e2
+	 	   | expression:e   
+	 	   |
+	 	   ;
+
+// une expession est soit une affectation ,une 			 
+expression ::= expr:e 
+             | LET IDENT:nom EGAL expr:e  				
+             | WHILE expr:cond DO expression:e 
+             | IF expr:cond THEN expression:a1 ELSE expression:a2 
+             | error // reprise d'erreurs
+			 ;
+
+// 
+expr ::= NOT:op expr:e
+	   | expr:e1 AND expr:e2
+	   | expr:e1 OR expr:e2
+	   | expr:e1 EGAL expr:e2
+	   | expr:e1 GT expr:e2
+	   | expr:e1 GTE expr:e2
+	   | expr:e1 PLUS expr:e2
+	   | expr:e1 MOINS expr:e2
+	   | expr:e1 MUL expr:e2
+	   | expr:e1 DIV expr:e2
+	   | expr:e1 MOD expr:e2
+	   | MOINS expr:e			 %prec MOINS_UNAIRE 
+	   | OUTPUT expr:e
+	   | INPUT
+	   | NIL
+	   | ENTIER:n
+	   | IDENT:id
+	   | PAR_G sequence:e PAR_D
+	   ;
+
