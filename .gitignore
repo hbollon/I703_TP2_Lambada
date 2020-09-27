@@ -1,9 +1,9 @@
 /.gradle/
-/gradle/
+#/gradle/
+#/gradlew*
 /bin/
 /build/
 /.settings/
-/gradlew*
 /.classpath
 /.project
 /.externalToolBuilders/
