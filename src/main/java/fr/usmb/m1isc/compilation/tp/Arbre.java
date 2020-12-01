@@ -3,7 +3,7 @@ package fr.usmb.m1isc.compilation.tp;
 public class Arbre {
 	
 	public enum NodeType {
-		PLUS, MOINS, MOINS_UNAIRE, MUL, DIV, MOD, NOT, OR, AND, PAR_G, PAR_D, SEMI, POINT, LET, INPUT, OUTPUT, IF, THEN, ELSE, WHILE, DO, EGAL, GT, GTE, NIL, ERROR, ENTIER, IDENT
+		NAME, PLUS, MOINS, MOINS_UNAIRE, MUL, DIV, MOD, NOT, OR, AND, PAR_G, PAR_D, SEMI, POINT, LET, INPUT, OUTPUT, IF, THEN, ELSE, WHILE, DO, EGAL, GT, GTE, NIL, ERROR, ENTIER, IDENT
 	}
 	
 	private NodeType type;
@@ -52,20 +52,15 @@ public class Arbre {
 	public void setFormat(char format) {
 		this.format = format;
 	}
-
 	
 	public String toString() {
-		StringBuilder res = new StringBuilder("");
-		switch (type) {
-			default : res.append(value);
-		}
-		if (fg != null || fd != null) {
-			res.append('(');
-			if (fg != null) res.append(fg); else res.append("null");
-			res.append(", ");
-			if (fd != null) res.append(fd); else res.append("null");
-			res.append(')');
-		}
-		return res.toString();
-	}
+		StringBuilder builder = new StringBuilder();
+		if (fg == null && fd == null)
+			return (String)value;
+	    if (fg != null)
+	    	builder.append(fg.toString());
+		if (fd != null)
+			builder.append(fd.toString());
+	    return builder.append((String)value).toString();
+	  }
 }
