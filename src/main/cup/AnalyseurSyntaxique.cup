@@ -2,6 +2,8 @@
 package fr.usmb.m1isc.compilation.tp;
 import java_cup.runtime.Symbol;
 import java.util.HashMap;
+import fr.usmb.m1isc.compilation.tp.Arbre;
+import fr.usmb.m1isc.compilation.tp.Arbre.NodeType;
 
 /* inclusion du code */
 
@@ -39,7 +41,7 @@ terminal PLUS, MOINS, MOINS_UNAIRE, MUL, DIV, MOD, NOT, OR, AND, PAR_G, PAR_D, S
 terminal Integer ENTIER;
 terminal String IDENT;
 /* non terminaux */
-non terminal program, sequence, expression, expr;
+non terminal Arbre program, sequence, expression, expr;
 
 precedence nonassoc OUTPUT;
 precedence right OR;
@@ -54,41 +56,41 @@ precedence left MOINS_UNAIRE;
 /* grammaire */
 // un pg est une sequence d'insctions terminee par point
 program ::= 
-	sequence:s POINT  
+	sequence:s POINT {: RESULT = s; :}
 	;
 
 // une sequence est une suite d'instructions separes par des point virgules	
-sequence ::= expression:e1 SEMI sequence:e2
-	 	   | expression:e   
-	 	   |
+sequence ::= expression:e1 SEMI sequence:e2 {: RESULT = new Arbre(NodeType.SEMI, ";", e1, e2); :}
+	 	   | expression:e {: RESULT = e; :}
+	 	   | {: RESULT = null; :}
 	 	   ;
 
 // une expession est soit une affectation ,une 			 
 expression ::= expr:e 
-             | LET IDENT:nom EGAL expr:e  				
-             | WHILE expr:cond DO expression:e 
-             | IF expr:cond THEN expression:a1 ELSE expression:a2 
+             | LET IDENT:nom EGAL expr:e {: RESULT = new Arbre(NodeType.LET, nom, e, null); :}				
+             | WHILE expr:cond DO expression:e {: RESULT = new Arbre(NodeType.WHILE, "while", cond, e); :}
+             | IF expr:cond THEN expression:a1 ELSE expression:a2 {: RESULT = new Arbre(NodeType.IF, "if", cond, new Arbre(NodeType.THEN, "then", a1, a2)); :}
              | error // reprise d'erreurs
 			 ;
 
 // 
 expr ::= NOT:op expr:e
-	   | expr:e1 AND expr:e2
-	   | expr:e1 OR expr:e2
-	   | expr:e1 EGAL expr:e2
-	   | expr:e1 GT expr:e2
-	   | expr:e1 GTE expr:e2
-	   | expr:e1 PLUS expr:e2
-	   | expr:e1 MOINS expr:e2
-	   | expr:e1 MUL expr:e2
-	   | expr:e1 DIV expr:e2
-	   | expr:e1 MOD expr:e2
-	   | MOINS expr:e			 %prec MOINS_UNAIRE 
-	   | OUTPUT expr:e
-	   | INPUT
-	   | NIL
-	   | ENTIER:n
-	   | IDENT:id
-	   | PAR_G sequence:e PAR_D
+	   | expr:e1 AND expr:e2 {: RESULT = new Arbre(NodeType.AND, "and", e1, e2); :}
+	   | expr:e1 OR expr:e2 {: RESULT = new Arbre(NodeType.OR, "or", e1, e2); :}
+	   | expr:e1 EGAL expr:e2 {: RESULT = new Arbre(NodeType.EGAL, "==", e1, e2); :}
+	   | expr:e1 GT expr:e2 {: RESULT = new Arbre(NodeType.GT, ">", e1, e2); :}
+	   | expr:e1 GTE expr:e2 {: RESULT = new Arbre(NodeType.GTE, ">=", e1, e2); :}
+	   | expr:e1 PLUS expr:e2 {: RESULT = new Arbre(NodeType.PLUS, "+", e1, e2); :}
+	   | expr:e1 MOINS expr:e2 {: RESULT = new Arbre(NodeType.MOINS, "-", e1, e2); :}
+	   | expr:e1 MUL expr:e2 {: RESULT = new Arbre(NodeType.MUL, "*", e1, e2); :}
+	   | expr:e1 DIV expr:e2 {: RESULT = new Arbre(NodeType.DIV, "/", e1, e2); :}
+	   | expr:e1 MOD expr:e2 {: RESULT = new Arbre(NodeType.MOD, "mod", e1, e2); :}
+	   | MOINS expr:e {: RESULT = new Arbre(NodeType.MOINS_UNAIRE, "-", e, null); :}			 %prec MOINS_UNAIRE 
+	   | OUTPUT expr:e {: RESULT = new Arbre(NodeType.OUTPUT, "output", e, null); :}
+	   | INPUT {: RESULT = new Arbre(NodeType.INPUT, "input", null, null); :}
+	   | NIL {: RESULT = new Arbre(NodeType.NIL, "nil", null, null); :}
+	   | ENTIER:n {: RESULT = new Arbre(NodeType.ENTIER, n.toString(), null, null); :}
+	   | IDENT:id {: RESULT = new Arbre(NodeType.IDENT, id, null, null); :}
+	   | PAR_G sequence:e PAR_D {: RESULT = e; :}
 	   ;
 
