@@ -55,12 +55,19 @@ public class Arbre {
 	
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
+		
 		if (fg == null && fd == null)
-			return (String)value;
+			return (String)value + " ";
+		
 	    if (fg != null)
-	    	builder.append(fg.toString());
-		if (fd != null)
-			builder.append(fd.toString());
-	    return builder.append((String)value).toString();
+	    	if (fd != null)
+	    		builder.append("(" + value + " " + fg.toString() + " " + fd.toString() + ")");
+	    	else
+	    		builder.append("(" + value + " " + fg.toString() + ")");
+	    else if (fd != null)
+	    	builder.append("(" + value + " . " + fd.toString() + ")");
+
+	    	
+	    return builder.toString();
 	  }
 }

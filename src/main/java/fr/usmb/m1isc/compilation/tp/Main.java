@@ -13,6 +13,6 @@ public class Main {
 		        yy = new LexicalAnalyzer(new InputStreamReader(System.in)) ;
 		@SuppressWarnings("deprecation")
 		parser p = new parser (yy);
-		System.out.println(p.parse().value.toString());
+		p.parse();
 	}
 }
