@@ -128,6 +128,31 @@ public class Arbre {
 			Collections.addAll(funcs, fd.parseFunctions());
 			break;
 			
+		case GT:
+            int gtId = 2;
+            Collections.addAll(funcs, fg.parseFunctions());
+            funcs.add("push eax");
+            Collections.addAll(funcs, fd.parseFunctions());
+            funcs.add("pop ebx");
+            funcs.add("sub eax, ebx");
+            funcs.add("jle FALSE_GT_" + gtId);
+            funcs.add("mov eax, 1");
+            funcs.add("jmp END_GT_" + gtId);
+            funcs.add("FALSE_GT_" + gtId + ":");
+            funcs.add("mov eax, 0");
+            funcs.add("END_GT_" + gtId + ":");
+            break;
+			
+		case WHILE:
+			int id = 1;
+			funcs.add("START_WHILE_" + id + ":");
+			Collections.addAll(funcs, fg.parseFunctions());
+			funcs.add("jz END_WHILE_" + id);
+			Collections.addAll(funcs, fd.parseFunctions());
+			funcs.add("jmp START_WHILE_" + id);
+			funcs.add("END_WHILE_" + id + ":");
+			break;
+			
 		default:
 			break;
 		}
