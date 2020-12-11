@@ -1,6 +1,7 @@
 package fr.usmb.m1isc.compilation.tp;
 
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class Main {
@@ -13,6 +14,13 @@ public class Main {
 		        yy = new LexicalAnalyzer(new InputStreamReader(System.in)) ;
 		@SuppressWarnings("deprecation")
 		parser p = new parser (yy);
-		p.parse();
+		Arbre a = (Arbre) p.parse().value;
+		Generator g = new Generator("test");
+		try {
+			g.convertToAsm(a);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println(a.toString());
 	}
 }

@@ -1,5 +1,9 @@
 package fr.usmb.m1isc.compilation.tp;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+
 public class Arbre {
 	
 	public enum NodeType {
@@ -51,6 +55,86 @@ public class Arbre {
 	}
 	public void setFormat(char format) {
 		this.format = format;
+	}
+	
+	public String[] getAllVariables() {
+		ArrayList<String> vars = new ArrayList<String>();
+		if(type.equals(NodeType.LET))
+			vars.add((String) fg.value);
+		if(fg != null)
+			Collections.addAll(vars, fg.getAllVariables());
+		if(fd != null)
+			Collections.addAll(vars, fd.getAllVariables());
+		
+		String[] out = new String[vars.size()];
+		out = vars.toArray(out);
+		return out;
+	}
+	
+	private String[] getCode(Arbre a, String r) throws IOException {
+		if(a.fg == null && a.fd == null) {
+			return new String[] {"mov " + r + ", " + (String)a.value};
+		}
+		
+		ArrayList<String> vars = new ArrayList<String>();
+		Collections.addAll(vars, a.parseFunctions());
+		vars.add("pop " + r);
+		
+		String[] out = new String[vars.size()];
+		out = vars.toArray(out);
+		return out;
+	}
+	
+	public String[] parseFunctions() throws IOException {
+		ArrayList<String> funcs = new ArrayList<String>();
+		
+		switch (type) {
+		case LET:
+			Collections.addAll(funcs, getCode(fd, "eax"));
+			funcs.add("mov " + fg.value + ", eax");
+			funcs.add("push eax");
+			break;
+			
+		case PLUS:
+			Collections.addAll(funcs, getCode(fg, "eax"));
+			Collections.addAll(funcs, getCode(fd, "ebx"));
+			funcs.add("add eax, ebx");
+			funcs.add("push eax");
+			break;
+			
+		case MOINS:
+			Collections.addAll(funcs, getCode(fg, "eax"));
+			Collections.addAll(funcs, getCode(fd, "ebx"));
+			funcs.add("sub eax, ebx");
+			funcs.add("push eax");
+			break;
+			
+		case MUL:
+			Collections.addAll(funcs, getCode(fg, "eax"));
+			Collections.addAll(funcs, getCode(fd, "ebx"));
+			funcs.add("mul eax, ebx");
+			funcs.add("push eax");
+			break;
+			
+		case DIV:
+			Collections.addAll(funcs, getCode(fg, "eax"));
+			Collections.addAll(funcs, getCode(fd, "ebx"));
+			funcs.add("div eax, ebx");
+			funcs.add("push eax");
+			break;
+			
+		case SEMI:
+			Collections.addAll(funcs, getCode(fg, "eax"));
+			Collections.addAll(funcs, fd.parseFunctions());
+			break;
+			
+		default:
+			break;
+		}
+		
+		String[] out = new String[funcs.size()];
+		out = funcs.toArray(out);
+		return out;
 	}
 	
 	public String toString() {
