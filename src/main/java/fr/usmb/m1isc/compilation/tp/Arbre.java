@@ -3,6 +3,8 @@ package fr.usmb.m1isc.compilation.tp;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Arbre {
 	
@@ -60,7 +62,7 @@ public class Arbre {
 	}
 	
 	public String[] getAllVariables() {
-		ArrayList<String> vars = new ArrayList<String>();
+		Set<String> vars = new HashSet<String>();
 		if(type.equals(NodeType.LET))
 			vars.add((String) fg.value);
 		if(fg != null)

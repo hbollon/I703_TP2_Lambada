@@ -2,8 +2,6 @@ DATA SEGMENT
 	a DD
 	b DD
 	aux DD
-	a DD
-	b DD
 DATA ENDS
 CODE SEGMENT
 	in eax
