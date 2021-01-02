@@ -23,7 +23,7 @@ public class Generator {
 		
 		f.write("CODE SEGMENT\n");
 		for(String func : a.parseFunctions()) {
-			f.write("	" + func + "\n");
+			f.write((func.contains(":") ? "" : "\t") + func + "\n");
 		}
 		f.write("CODE ENDS\n");
 		
