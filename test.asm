@@ -6,26 +6,25 @@ DATA SEGMENT
 	b DD
 DATA ENDS
 CODE SEGMENT
-	mov eax, input
+	in eax
 	mov a, eax
-	push eax
-	pop eax
-	mov eax, input
+	in eax
 	mov b, eax
+START_WHILE_1:
+	mov eax, 0
 	push eax
-	pop eax
-	START_WHILE_1:
-	push eax
+	mov eax, b
 	pop ebx
 	sub eax, ebx
-	jle FALSE_GT_2
+	jle FALSE_GT_1
 	mov eax, 1
-	jmp END_GT_2
-	FALSE_GT_2:
+	jmp END_GT_1
+FALSE_GT_1:
 	mov eax, 0
-	END_GT_2:
+END_GT_1:
 	jz END_WHILE_1
 	jmp START_WHILE_1
-	END_WHILE_1:
-	pop eax
+END_WHILE_1:
+	mov eax, a
+	out eax
 CODE ENDS

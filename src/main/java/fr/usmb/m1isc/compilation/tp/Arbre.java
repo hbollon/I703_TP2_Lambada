@@ -14,11 +14,13 @@ public class Arbre {
 	private Object value;
 	private Arbre fg, fd;
 	private char format = 0;
+	private int id;
 	public Arbre(NodeType type, Object value, Arbre fg, Arbre fd) {
 		this.type = type;
 		this.value = value;
 		this.fg = fg;
 		this.fd = fd;
+		this.id = 1;
 	}
 	public Arbre(NodeType type, Object value) {
 		this(type, value, null, null);
@@ -71,87 +73,162 @@ public class Arbre {
 		return out;
 	}
 	
-	private String[] getCode(Arbre a, String r) throws IOException {
-		if(a.fg == null && a.fd == null) {
-			return new String[] {"mov " + r + ", " + (String)a.value};
-		}
-		
-		ArrayList<String> vars = new ArrayList<String>();
-		Collections.addAll(vars, a.parseFunctions());
-		vars.add("pop " + r);
-		
-		String[] out = new String[vars.size()];
-		out = vars.toArray(out);
-		return out;
-	}
-	
 	public String[] parseFunctions() throws IOException {
 		ArrayList<String> funcs = new ArrayList<String>();
+		int condId;
 		
 		switch (type) {
+		case ENTIER :
+			funcs.add("mov eax, " + value);
+            break;
+
+        case IDENT:
+        	funcs.add("mov eax, " + value);
+            break;
+            
 		case LET:
-			Collections.addAll(funcs, getCode(fd, "eax"));
+			Collections.addAll(funcs, fd.parseFunctions());
 			funcs.add("mov " + fg.value + ", eax");
-			funcs.add("push eax");
 			break;
 			
 		case PLUS:
-			Collections.addAll(funcs, getCode(fg, "eax"));
-			Collections.addAll(funcs, getCode(fd, "ebx"));
-			funcs.add("add eax, ebx");
+			Collections.addAll(funcs, fg.parseFunctions());
 			funcs.add("push eax");
+			Collections.addAll(funcs, fd.parseFunctions());
+			funcs.add("pop ebx");
+			funcs.add("add eax, ebx");
 			break;
 			
 		case MOINS:
-			Collections.addAll(funcs, getCode(fg, "eax"));
-			Collections.addAll(funcs, getCode(fd, "ebx"));
-			funcs.add("sub eax, ebx");
+			Collections.addAll(funcs, fg.parseFunctions());
 			funcs.add("push eax");
+			Collections.addAll(funcs, fd.parseFunctions());
+			funcs.add("pop ebx");
+			funcs.add("sub eax, ebx");
 			break;
 			
 		case MUL:
-			Collections.addAll(funcs, getCode(fg, "eax"));
-			Collections.addAll(funcs, getCode(fd, "ebx"));
-			funcs.add("mul eax, ebx");
+			Collections.addAll(funcs, fg.parseFunctions());
 			funcs.add("push eax");
+			Collections.addAll(funcs, fd.parseFunctions());
+			funcs.add("pop ebx");
+			funcs.add("mul eax, ebx");
 			break;
 			
 		case DIV:
-			Collections.addAll(funcs, getCode(fg, "eax"));
-			Collections.addAll(funcs, getCode(fd, "ebx"));
-			funcs.add("div eax, ebx");
+			Collections.addAll(funcs, fg.parseFunctions());
 			funcs.add("push eax");
+			Collections.addAll(funcs, fd.parseFunctions());
+			funcs.add("pop ebx");
+			funcs.add("div eax, ebx");
 			break;
 			
 		case SEMI:
-			Collections.addAll(funcs, getCode(fg, "eax"));
+			Collections.addAll(funcs, fg.parseFunctions());
 			Collections.addAll(funcs, fd.parseFunctions());
 			break;
 			
 		case GT:
-            int gtId = 2;
+			condId = getCondId();
             Collections.addAll(funcs, fg.parseFunctions());
             funcs.add("push eax");
             Collections.addAll(funcs, fd.parseFunctions());
             funcs.add("pop ebx");
             funcs.add("sub eax, ebx");
-            funcs.add("jle FALSE_GT_" + gtId);
+            funcs.add("jle FALSE_GT_" + condId);
             funcs.add("mov eax, 1");
-            funcs.add("jmp END_GT_" + gtId);
-            funcs.add("FALSE_GT_" + gtId + ":");
+            funcs.add("jmp END_GT_" + condId);
+            funcs.add("FALSE_GT_" + condId + ":");
             funcs.add("mov eax, 0");
-            funcs.add("END_GT_" + gtId + ":");
+            funcs.add("END_GT_" + condId + ":");
+            break;
+            
+		case GTE:
+            condId = getCondId();
+            Collections.addAll(funcs, fg.parseFunctions());
+            funcs.add("push eax");
+            Collections.addAll(funcs, fd.parseFunctions());
+            funcs.add("pop ebx");
+            funcs.add("sub eax, ebx");
+            funcs.add("jle FALSE_GTE_" + condId);
+            funcs.add("mov eax, 1");
+            funcs.add("jmp END_GTE_" + condId);
+            funcs.add("FALSE_GTE_" + condId + ":");
+            funcs.add("mov eax, 0");
+            funcs.add("END_GTE_" + condId + ":");
             break;
 			
 		case WHILE:
-			int id = 1;
-			funcs.add("START_WHILE_" + id + ":");
+			condId = getCondId();
+			funcs.add("START_WHILE_" + condId + ":");
 			Collections.addAll(funcs, fg.parseFunctions());
-			funcs.add("jz END_WHILE_" + id);
+			funcs.add("jz END_WHILE_" + condId);
 			Collections.addAll(funcs, fd.parseFunctions());
-			funcs.add("jmp START_WHILE_" + id);
-			funcs.add("END_WHILE_" + id + ":");
+			funcs.add("jmp START_WHILE_" + condId);
+			funcs.add("END_WHILE_" + condId + ":");
 			break;
+			
+		case IF:
+			condId = getCondId();
+			Collections.addAll(funcs, fg.parseFunctions());
+            funcs.add("jz ELSE_" + condId);
+            Collections.addAll(funcs, fd.getFg().parseFunctions());
+            funcs.add("jmp END_IF_" + condId);
+            funcs.add("ELSE_" + condId + ":");
+            Collections.addAll(funcs, fd.getFd().parseFunctions());
+            funcs.add("END_IF_" + condId + ":");
+            break;
+
+        case AND:
+        	condId = getCondId();
+        	Collections.addAll(funcs, fg.parseFunctions());
+            funcs.add("jz END_AND_" + condId);
+            Collections.addAll(funcs, fd.parseFunctions());
+            funcs.add("END_AND_" + condId+ ":");
+            break;
+
+        case OR:
+        	condId = getCondId();
+        	Collections.addAll(funcs, fg.parseFunctions());
+            funcs.add("jnz END_OR_" + condId);
+            Collections.addAll(funcs, fd.parseFunctions());
+            funcs.add("END_OR_" + condId + ":");
+            break;
+
+        case EGAL:
+        	condId = getCondId();
+            Collections.addAll(funcs, fg.parseFunctions());
+            funcs.add("push eax");
+            Collections.addAll(funcs, fd.parseFunctions());
+            funcs.add("pop ebx");
+            funcs.add("sub eax, ebx");
+            funcs.add("jnz FALSE_EGAL_" + condId);
+            funcs.add("mov eax, 1");
+            funcs.add("jmp END_EGAL" + condId);
+            funcs.add("FALSE_EGAL_" + condId + ":");
+            funcs.add("mov eax, 0");
+            funcs.add("END_EGAL" + condId + ":");
+            break;
+
+        case NOT:
+        	condId = getCondId();
+        	Collections.addAll(funcs, fg.parseFunctions());
+            funcs.add("jz TRUE_NOT_" + condId);
+            funcs.add("mov eax, 0");
+            funcs.add("jmp END_NOT_" + condId);
+            funcs.add("TRUE_NOT_" + condId + ":");
+            funcs.add("mov eax, 1");
+            funcs.add("END_NOT_" + condId + ":");
+            break;
+            
+        case INPUT:
+            funcs.add("in eax");
+            break;
+
+        case OUTPUT:
+        	Collections.addAll(funcs, fg.parseFunctions());
+            funcs.add("out eax");
+            break;
 			
 		default:
 			break;
@@ -179,4 +256,8 @@ public class Arbre {
 	    	
 	    return builder.toString();
 	  }
+	
+	public int getCondId() {
+		return id++;
+	}
 }
