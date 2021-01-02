@@ -23,6 +23,19 @@ FALSE_GT_1:
 	mov eax, 0
 END_GT_1:
 	jz END_WHILE_1
+	mov eax, b
+	push eax
+	mov eax, a
+	pop ebx
+	mov ecx, eax
+	div ecx, ebx
+	mul ecx, ebx
+	sub eax, ecx
+	mov aux, eax
+	mov eax, b
+	mov a, eax
+	mov eax, aux
+	mov b, eax
 	jmp START_WHILE_1
 END_WHILE_1:
 	mov eax, a

@@ -123,6 +123,17 @@ public class Arbre {
 			funcs.add("div eax, ebx");
 			break;
 			
+		case MOD:
+			Collections.addAll(funcs, fd.parseFunctions());
+			funcs.add("push eax");
+            Collections.addAll(funcs, fg.parseFunctions());
+            funcs.add("pop ebx");
+            funcs.add("mov ecx, eax");
+            funcs.add("div ecx, ebx");
+            funcs.add("mul ecx, ebx");
+            funcs.add("sub eax, ecx");
+            break;
+			
 		case SEMI:
 			Collections.addAll(funcs, fg.parseFunctions());
 			Collections.addAll(funcs, fd.parseFunctions());
@@ -163,7 +174,8 @@ public class Arbre {
 			funcs.add("START_WHILE_" + condId + ":");
 			Collections.addAll(funcs, fg.parseFunctions());
 			funcs.add("jz END_WHILE_" + condId);
-			Collections.addAll(funcs, fd.parseFunctions());
+			if(fd.getFg() != null)
+				Collections.addAll(funcs, fd.getFg().parseFunctions());
 			funcs.add("jmp START_WHILE_" + condId);
 			funcs.add("END_WHILE_" + condId + ":");
 			break;
@@ -172,10 +184,12 @@ public class Arbre {
 			condId = getCondId();
 			Collections.addAll(funcs, fg.parseFunctions());
             funcs.add("jz ELSE_" + condId);
-            Collections.addAll(funcs, fd.getFg().parseFunctions());
+            if(fd.getFg() != null)
+            	Collections.addAll(funcs, fd.getFg().parseFunctions());
             funcs.add("jmp END_IF_" + condId);
             funcs.add("ELSE_" + condId + ":");
-            Collections.addAll(funcs, fd.getFd().parseFunctions());
+            if(fd.getFd().getFg() != null)
+            	Collections.addAll(funcs, fd.getFd().getFg().parseFunctions());
             funcs.add("END_IF_" + condId + ":");
             break;
 
