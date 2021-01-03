@@ -1,73 +1,108 @@
-# TP Compilation : Génération d'arbres abstraits
+Bollon Hugo
+<h1 align="center">TP Compilation : Génération d'arbres abstraits et conversion en code assembleur</h1>
 
-L'objectif du TP est d'utiliser les outils JFlex et CUP pour générer des arbres abstraits correspondant à un sous ensemble du langage **λ-ada**.
+À partir de l'arbre abstrait construit lors du dernier TP, avec les outils JFlex et CUP, l'objectif consiste à générer du code pour la machine à registres décrite dans le cours, afin d'être en mesure d'exécuter les programmes reconnus par l'analyseur sur la machine à registres.
 
-## Exercice 1 :
+## Utilisation 
 
-Utiliser JFlex et CUP pour générer l'arbre abstrait correspondant à l'analyse d'expressions arithmétiques sur les nombres entiers.
+Pour utiliser ce programme il faut suffit de le lancer dans un ide (comme Eclipse par exemple) ou de l'éxecuter avec maven.
+Vous pourrez ensuite entrer via le terminal du code, il le convertira en arbre et l'affichera dans le terminal sous forme de string lors qu'il rencontrera un point.
+Lors que vous fermerez le parser (Ctrl+D sur Eclipse), il génèrera un fichier assembleur (test.asm à la racine du projet).
 
-Exemple de fichier source pour l'analyseur :
+## Exemples 
 
-```
-12 + 5;             /* ceci est un commentaire */
-10 / 2 - 3;  99;    /* le point-virgule sépare les expressions à évaluer */
-/* l'évaluation donne toujours un nombre entier */
-((30 * 1) + 4) mod 2; /* opérateurs binaires */
-3 * -4;             /* attention à l'opérateur unaire */
-
-let prixHt = 200;   /* une variable prend valeur lors de sa déclaration */
-let prixTtc =  prixHt * 119 / 100;
-prixTtc + 100.
+Code entré:
+```ada
+let prixHt = 200;
+let prixTtc =  prixHt * 119 / 100 .
 ```
 
-L'expression
-
+Sortie dans le terminal:
 ```
-let prixTtc =  prixHt * 119 / 100;
-prixTtc + 100
-```
-pourra donner, par exemple, l'arbre suivant :
-
-![exemple arbre abtrait](arbre.png "arbre abstrait")
-
-Une fois l'arbre généré, récupérez le dans le programme pricipal et affichez le, par exemple sous la forme d'une expression préfixée parenthésée :
-`(; (LET prixTtc (/ (* prixHt 119) 100)) (+ prixTtc 100))`
-
-## Exercice 2 :
-
-Compléter la grammaire précédente en y ajoutant les opérateurs booléens, ceux de comparaison, la boucle et la conditionnelle, afin d'obtenir un sous-ensemble du langage **λ-ada** un peu plus complet.
-
-Grammaire abstraite du sous-ensemble de λ-ada correspondant :
-
-```
-expression → expression ';' expression  
-expression → LET IDENT '=' expression
-expression → IF expression THEN expression ELSE expression
-expression → WHILE expression DO expression
-expression → '-' expression
-expression → expression '+' expression
-expression → expression '-' expression
-expression → expression '*' expression
-expression → expression '/' expression
-expression → expression MOD expression
-expression → expression '<' expression
-expression → expression '<=' expression
-expression → expression '=' expression
-expression → expression AND expression
-expression → expression OR expression
-expression → NOT expression 
-expression → OUTPUT expression 
-expression → INPUT | NIL | IDENT | ENTIER
+(; (let prixHt  200 ) (let prixTtc  (/ (* prixHt  119 ) 100 )))
 ```
 
-Le langage obtenu est tout de suite un peu plus intéressant et permet de programmer plus de choses.
-
-Exemple de programme possible pour le sous-ensemble de λ-ada considéré ici : calcul de PGCD.
-
+Code généré:
+```asm
+DATA SEGMENT
+	prixTtc DD
+	prixHt DD
+DATA ENDS
+CODE SEGMENT
+	mov eax, 200
+	mov prixHt, eax
+	mov eax, prixHt
+	push eax
+	mov eax, 119
+	pop ebx
+	mul eax, ebx
+	push eax
+	mov eax, 100
+	pop ebx
+	div eax, ebx
+	mov prixTtc, eax
+CODE ENDS
 ```
+
+---
+
+Code entré:
+```ada
 let a = input;
 let b = input;
 while (0 < b)
 do (let aux=(a mod b); let a=b; let b=aux );
-output a .
+output a
+.
+```
+
+Sortie dans le terminal:
+```
+(; (let a  input ) (; (let b  input ) (; (while (< 0  b ) (do (; (let aux  (mod a  b )) (; (let a  b ) (let b  aux ))))) (output a ))))
+```
+
+Code généré:
+```asm
+DATA SEGMENT
+	a DD
+	b DD
+	aux DD
+DATA ENDS
+CODE SEGMENT
+	in eax
+	mov a, eax
+	in eax
+	mov b, eax
+START_WHILE_1:
+	mov eax, 0
+	push eax
+	mov eax, b
+	pop ebx
+	sub eax, ebx
+	jle FALSE_GT_1
+	mov eax, 1
+	jmp END_GT_1
+FALSE_GT_1:
+	mov eax, 0
+END_GT_1:
+	jz END_WHILE_1
+	mov eax, b
+	push eax
+	mov eax, a
+	pop ebx
+	mov ecx, eax
+	div ecx, ebx
+	mul ecx, ebx
+	sub eax, ecx
+	mov aux, eax
+	mov eax, b
+	mov a, eax
+	mov eax, aux
+	mov b, eax
+	jmp START_WHILE_1
+END_WHILE_1:
+	mov eax, a
+	out eax
+CODE ENDS
+
 ```
